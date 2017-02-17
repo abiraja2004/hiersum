@@ -1,4 +1,4 @@
-ctive multi-document summarization models in Python
+# Extractive multi-document summarization models in Python
 
 Description TODO
 
