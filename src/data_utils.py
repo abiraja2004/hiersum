@@ -1,6 +1,6 @@
 import os
 from functools import partial
-from typing import Callable
+from typing import Callable, Any
 
 
 class LazyFileIO:
@@ -9,6 +9,11 @@ class LazyFileIO:
 
     Must be instantiated using a context manager (eq. "with")
     so that files can be closed properly and reliably
+
+    Usage:
+        apply_func with a function that takes a list of strings
+        as its first argument, and then any number of other arguments
+        apply_func will call fst_arg_last because it uses map
 
     """
 
@@ -38,20 +43,38 @@ class LazyFileIO:
         if self._fhandle:
             self._fhandle.close()
 
-    def apply_func(self, func: Callable, *args):
+    @staticmethod
+    def fst_arg_last(func):
+        """ No need to explicitly call this method
+            Automatically called when using apply_func
+        """
+        def inner(*args):
+            args = args[1:] + (args[0],)  # unpack then pack tuple
+            return func(*args)
+        return inner
+
+    def safe_apply_func(self, func, *args):
+        if not self.context_managed:
+            raise Exception('Object must be initialized with context manager')
+        try:
+            if not args:
+                yield from (func(i) for i in self.lines)
+            else:
+                yield from(func(i, *args) for i in self.lines)
+        except TypeError as error:
+            print(error)
+
+    def apply_func(self, func: Callable[[str], Any], *args):  
+                    # actually Callable[[str,...], Any]
         """ map function over data """
         if not self.context_managed:
             raise Exception('Object must be initialized with context manager')
         try:
-            afunc = partial(func, args) if args else func
+            afunc = func if not args else partial(
+                    (LazyFileIO.fst_arg_last(func)), *args)
             yield from map(afunc, self.lines)
         except TypeError as error:
             print(error)
 
     def apply_funcs(self, *funcs):
         raise NotImplementedError
-
-    def __del__(self):
-        """ Unreliable due to Python's garbage collection weirdness """
-        if self._fhandle:
-            self._fhandle.close()
