@@ -15,6 +15,14 @@ class LazyFileIO:
         as its first argument, and then any number of other arguments
         apply_func will call fst_arg_last because it uses map
 
+        iter_apply_func should be favored over apply_func
+        unless map is more efficient for your particular instance
+
+        for chaining multiple generators (i.e. apply_func), 
+        use chain.from_iterables from itertools 
+        until I implement apply_funcs
+        
+
     """
 
     def __init__(self, filename, buf=-1, enc='utf-8'):
@@ -53,7 +61,7 @@ class LazyFileIO:
             return func(*args)
         return inner
 
-    def safe_apply_func(self, func, *args):
+    def iter_apply_func(self, func, *args):
         if not self.context_managed:
             raise Exception('Object must be initialized with context manager')
         try:
