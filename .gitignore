@@ -1,5 +1,12 @@
-*.pdf
-.
-..
-.DS*
+# -*- mode: gitignore; -*-
+.DS_Store
 __pycache*
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+*.pdf
